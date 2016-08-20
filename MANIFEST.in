@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include db_snapshot *.css
+recursive-include db_snapshot *.csv
+recursive-include db_snapshot *.html
+recursive-include db_snapshot *.ico
+recursive-include db_snapshot *.js
+recursive-include db_snapshot *.json
+recursive-include db_snapshot *.md
+recursive-include db_snapshot *.png
+recursive-include db_snapshot *.py
+recursive-include db_snapshot *.svg
+recursive-include db_snapshot *.txt
+recursive-exclude db_snapshot *.pyc
