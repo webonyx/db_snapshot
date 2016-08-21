@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import os, json
 import frappe
+from frappe.installer import extract_sql_gzip, import_db_from_sql
 from frappe.utils import get_site_path, get_site_base_path, get_backups_path
 from frappe.utils.backups import new_backup
 
@@ -34,8 +35,8 @@ class SnapshotGenerator:
 		self.data = data
 		save_snapshots_data(data)
 
-	def update(self, ddict):
-		self.data.update(ddict)
+	def update_path(self, path):
+		self.data.update({self.name: path})
 		save_snapshots_data(self.data)
 
 	def take(self):
@@ -51,11 +52,13 @@ class SnapshotGenerator:
 			os.mkdir(snapshot_path)
 
 		os.rename(filename, snapshotname)
-		self.data.update({self.name: snapshotname})
-		save_snapshots_data(self.data)
+		self.update_path(snapshotname)
 
 	def restore(self):
-		restore_from_file(self.get())
+		path = str(self.get())
+		restore_from_file(path)
+		if path.endswith('sql.gz'):
+			self.update_path(path[:-3])
 
 
 def get_snapshots_path():
@@ -81,15 +84,13 @@ def get_snapshots_data():
 			return json.load(f)
 
 
-def restore_from_file(filename):
-	args = {
-		"filename": filename,
-		"user": frappe.conf.db_name,
-		"password": frappe.conf.db_password,
-		"db_name": frappe.conf.db_name,
-		"db_host": frappe.db.host,
-	}
+def restore_from_file(sql_file_path):
+	frappe.flags.in_install_db = True
 
-	cmd_string = """gunzip < %(filename)s | mysql -u %(user)s -p%(password)s %(db_name)s -h %(db_host)s""" % args
-	frappe.utils.execute_in_shell(cmd_string)
+	if sql_file_path.endswith('sql.gz'):
+		sql_file_path = extract_sql_gzip(os.path.abspath(sql_file_path))
+
+	import_db_from_sql(sql_file_path, True)
+
+	frappe.flags.in_install_db = False
 	frappe.clear_cache()

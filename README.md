@@ -10,7 +10,7 @@ Utility app for database snapshot taking and restoring.
 
 `bench db_snapshot restore snapshot_name`
 
-`bench db_snapshot restore-from-file filename`
+`bench db_snapshot restore-from-file sql_file_path`
 
 `bench db_snapshot delete snapshot_name`
 
