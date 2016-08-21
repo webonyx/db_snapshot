@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 import click
 import frappe
-from db_snapshot.snapshot import get_snapshots_data, SnapshotGenerator
+import os
+from db_snapshot.snapshot import get_snapshots_data, SnapshotGenerator, restore_from_file
 from frappe.commands import pass_context, get_site
 
 
@@ -9,13 +10,10 @@ from frappe.commands import pass_context, get_site
 @click.argument('name')
 @pass_context
 def take(context, name):
-	from db_snapshot.snapshot import take_snapshot as _take_snapshot
-
 	site = get_site(context)
 	frappe.init(site=site)
 	frappe.connect()
-	_take_snapshot(name)
-
+	SnapshotGenerator(name).take()
 	frappe.db.close()
 
 
@@ -23,24 +21,36 @@ def take(context, name):
 @click.argument('name')
 @pass_context
 def restore(context, name):
-	from db_snapshot.snapshot import restore_snapshot
+	site = get_site(context)
+	frappe.init(site=site)
+	frappe.connect()
+	SnapshotGenerator(name).restore()
+	frappe.db.close()
+	print "Restored"
+
+
+@click.command('restore-from-file')
+@click.argument('filename')
+@pass_context
+def restore_from_file(context, filename):
+	if not os.path.exists(filename):
+		raise IOError('"{}" does not exists'.format(filename))
 
 	site = get_site(context)
 	frappe.init(site=site)
 	frappe.connect()
-	restore_snapshot(name)
-
+	restore_from_file(filename)
 	frappe.db.close()
+	print "Restored"
 
 
-@click.command('remove')
+@click.command('delete')
 @click.argument('name')
 @pass_context
-def remove(context, name):
+def delete(context, name):
 	site = get_site(context)
 	frappe.init(site=site)
-	sn = SnapshotGenerator(name)
-	sn.remove()
+	SnapshotGenerator(name).delete()
 
 
 @click.command('list')
@@ -57,5 +67,6 @@ commands = [
 	take,
 	list,
 	restore,
-	remove,
+	restore_from_file,
+	delete,
 ]

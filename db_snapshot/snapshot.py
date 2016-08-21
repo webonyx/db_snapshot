@@ -5,6 +5,7 @@ import frappe
 from frappe.utils import get_site_path, get_site_base_path, get_backups_path
 from frappe.utils.backups import new_backup
 
+
 class SnapshotGenerator:
 	def __init__(self, name):
 		self.name = name
@@ -22,7 +23,7 @@ class SnapshotGenerator:
 
 		return self.data
 
-	def remove(self):
+	def delete(self):
 		data = get_snapshots_data()
 
 		for key in list(data):
@@ -37,7 +38,7 @@ class SnapshotGenerator:
 		self.data.update(ddict)
 		save_snapshots_data(self.data)
 
-	def take_snapshot(self):
+	def take(self):
 		if self.exists():
 			return self.get()
 
@@ -53,22 +54,9 @@ class SnapshotGenerator:
 		self.data.update({self.name: snapshotname})
 		save_snapshots_data(self.data)
 
-	def restore_snapshot(self):
-		import frappe.utils
-		snapshot = self.get()
-		args = {
-			"snapshot": snapshot,
-			"user": frappe.conf.db_name,
-			"password": frappe.conf.db_password,
-			"db_name": frappe.conf.db_name,
-			"db_host": frappe.db.host,
-		}
+	def restore(self):
+		restore_from_file(self.get())
 
-		cmd_string = """gunzip < %(snapshot)s | mysql -u %(user)s -p%(password)s %(db_name)s -h %(db_host)s""" % args
-		err, out = frappe.utils.execute_in_shell(cmd_string)
-		frappe.clear_cache()
-
-		print "Restored"
 
 def get_snapshots_path():
 	return get_site_path("private", "snapshots")
@@ -77,9 +65,11 @@ def get_snapshots_path():
 def get_snapshots_config_path():
 	return os.path.join(get_site_base_path(), "snapshots.json")
 
+
 def save_snapshots_data(data):
 	with open(get_snapshots_config_path(), 'w') as f:
 		json.dump(data, f, indent=1, sort_keys=True)
+
 
 def get_snapshots_data():
 	config_path = get_snapshots_config_path()
@@ -90,9 +80,25 @@ def get_snapshots_data():
 		with open(config_path, 'r') as f:
 			return json.load(f)
 
+
+def restore_from_file(filename):
+	args = {
+		"filename": filename,
+		"user": frappe.conf.db_name,
+		"password": frappe.conf.db_password,
+		"db_name": frappe.conf.db_name,
+		"db_host": frappe.db.host,
+	}
+
+	cmd_string = """gunzip < %(filename)s | mysql -u %(user)s -p%(password)s %(db_name)s -h %(db_host)s""" % args
+	frappe.utils.execute_in_shell(cmd_string)
+	frappe.clear_cache()
+
+
 def take_snapshot(name):
 	sn = SnapshotGenerator(name)
 	sn.take_snapshot()
+
 
 def restore_snapshot(name):
 	sn = SnapshotGenerator(name)
