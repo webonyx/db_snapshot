@@ -93,13 +93,3 @@ def restore_from_file(filename):
 	cmd_string = """gunzip < %(filename)s | mysql -u %(user)s -p%(password)s %(db_name)s -h %(db_host)s""" % args
 	frappe.utils.execute_in_shell(cmd_string)
 	frappe.clear_cache()
-
-
-def take_snapshot(name):
-	sn = SnapshotGenerator(name)
-	sn.take_snapshot()
-
-
-def restore_snapshot(name):
-	sn = SnapshotGenerator(name)
-	sn.restore_snapshot()
