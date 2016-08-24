@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import click
 import frappe
 import os
-from db_snapshot.snapshot import get_snapshots_data, SnapshotGenerator, restore_from_file
+from db_snapshot.snapshot import get_snapshots_data, SnapshotGenerator, restore_from_file as do_restore_from_file
 from frappe.commands import pass_context, get_site
 
 
@@ -39,7 +39,7 @@ def restore_from_file(context, filename):
 	site = get_site(context)
 	frappe.init(site=site)
 	frappe.connect()
-	restore_from_file(filename)
+	do_restore_from_file(filename)
 	frappe.db.close()
 	print "Restored"
 
