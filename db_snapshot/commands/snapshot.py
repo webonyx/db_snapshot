@@ -25,7 +25,13 @@ def restore(context, name):
 	frappe.init(site=site)
 	frappe.connect()
 	SnapshotGenerator(name).restore()
-	frappe.db.close()
+
+	from frappe.migrate import migrate
+	try:
+		migrate(context.verbose)
+	finally:
+		frappe.destroy()
+
 	print "Restored"
 
 
@@ -40,7 +46,11 @@ def restore_from_file(context, filename):
 	frappe.init(site=site)
 	frappe.connect()
 	do_restore_from_file(filename)
-	frappe.db.close()
+	from frappe.migrate import migrate
+	try:
+		migrate(context.verbose)
+	finally:
+		frappe.destroy()
 	print "Restored"
 
 
